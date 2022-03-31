@@ -1,4 +1,6 @@
-package com.corso.esercizioDb2;
+// USARE EMPLOYEE COME APPOGGIO PER OGNI SCANNER USATO PER INSERIRE O MENO
+
+package com.corso.employeeExercise;
 
 
 public class Test {
@@ -6,17 +8,14 @@ public class Test {
 
     public static void main(String[] args)  {
 
-
             try{
-                    Thread threadCreateTable= new ThreadCreateTable();
-                    threadCreateTable.setName("Thread-creazione");
-                    threadCreateTable.start();
-                    threadCreateTable.join();
-
+                    ThreadMaster threadCreateTable= new ThreadCreateTable();
+                    threadCreateTable.run();
+                    //threadCreateTable.print();
+                    System.out.println("\n");
                     ThreadOperations threadOperations= new ThreadOperations();
-                    threadOperations.setName("Thread-operazioni");
-                    threadOperations.start();
-
+                    threadOperations.run();
+                    //threadOperations.print();
 
             } catch (Exception e) {
                 e.printStackTrace();

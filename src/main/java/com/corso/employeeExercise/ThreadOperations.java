@@ -1,14 +1,15 @@
-package com.corso.esercizioDb2;
+package com.corso.employeeExercise;
 
+import java.io.IOException;
 import java.sql.*;
 import java.util.Scanner;
 
-public class ThreadOperations extends Thread {
+public class ThreadOperations extends ThreadMaster implements CommandLine {
 
     static final LOG L = LOG.getInstance();
 
-    private Connection connection;
-    private Statement statement;
+    private Connection connection=connect();
+    private Statement statement= connect().createStatement();
     private PreparedStatement preparedStatement;
     private ResultSet resultSet;
 
@@ -16,78 +17,68 @@ public class ThreadOperations extends Thread {
     private Scanner s = new Scanner(System.in);
 
 
-    public ThreadOperations() {
+    public ThreadOperations() throws IOException, SQLException {
 
     }
 
     @Override
     public void run() {
         try {
-            this.insertRecord();
+            this.printQuery();
         } catch (SQLException e) {
             e.printStackTrace();
         }
         this.operation();
 
-        try {
-            this.closeMethod();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
 
-    public void insertRecord() throws SQLException {
 
-        connection = DriverManager.getConnection(DbConstant.DB_URL, DbConstant.DB_User, DbConstant.DB_Passw);
-        statement = connection.createStatement();
+    @Override
+    public void insertEmployee() throws IOException, SQLException {
 
 
         L.info("Inserisci i dati come segue:\n"+
-                "Marchio,  Nazione,  Fatturato(di tipo double) , Numero Dipendenti");
+                "id, nome, cognome");
 
         String sqlInsertTable= "" +
-                "INSERT INTO academyjdbc.auto ( marchio, nazione, fatturato, dipendenti) " +
-                "VALUES (?, ?, ?, ?)" ;
+                "INSERT INTO academyjdbc.employee ( id, name, lastname) " +
+                "VALUES (?, ?, ?)" ;
 
         preparedStatement=connection.prepareStatement(sqlInsertTable);
-        preparedStatement.setString(1,s.next());
+        preparedStatement.setInt(1,s.nextInt());
         preparedStatement.setString(2,s.next());
-        preparedStatement.setDouble(3, s.nextDouble());
-        preparedStatement.setInt(4,s.nextInt());
-        boolean temp=preparedStatement.execute();
-        L.info("Aggiunto record");
+        preparedStatement.setString(3, s.next());
+            preparedStatement.execute();
+            L.info("Aggiunto record");
     }
 
 
-    public void operation()   {
+    public void operation(){
         System.out.println("\n");
 
-        L.info("Decidi cosa vuoi stampare : \n" +
-                "1: Elenca il marchio ed il fatturato in ordine discendente. \n" +
-                "2: Elenca il numero di marchi per nazione. \n" +
-                "3: Elenca il numero di dipendenti per nazione \n" +
-                "4: Elenca per ogni marchio il fatturato per dipendenti in ordine decrescente. \n"+
-                "5: Elenca il fatturato per nazione in ordine decrescente. \n" +
+        L.info("Decidi cosa vuoi fare : \n" +
+                "1: Stampa i dati nel db \n" +
+                "2: Inserisci un nuovo impiegato \n" +
+                "3: Modifica un impiegato e vedi il risultato \n" +
+                "4: Elimina un impiegato \n"+
                 "0: Per uscire");
 
         int scelta = s.nextInt();
 
             try {
 
-                switch (scelta) {
-                    case 1:
-                        printQ1();break;
-                    case 2:
-                        printQ2();break;
-                    case 3:
-                        printQ3();break;
-                    case 4:
-                        printQ4();break;
-                    case 5:
-                        printQ5();break;
-                    default: L.error("Arrivederci");break;
-                }
+            switch (scelta) {
+                case 1:
+                    printQuery();break;
+                case 2:
+                    insertEmployee();break;
+                case 3:
+                    updateEmployee();break;
+                case 4:
+                    deleteEmployee();break;
+                default: L.error("Numero inserito errato, arrivedercik");break;
+            }
         }
         catch (Exception e){
             e.printStackTrace();
@@ -95,85 +86,72 @@ public class ThreadOperations extends Thread {
     }
 
 
-    public void printQ1() throws SQLException {
+    @LoggerAnnotation("siamo nel threadOperations")
+    @Override
+    public void print() throws SQLException {
+
+    }
+
+    public void printQuery() throws SQLException {
         String printQ1="" +
-                "SELECT a.marchio, a.fatturato \n" +
-                "FROM academyjdbc.auto a\n" +
-                "ORDER BY a.fatturato DESC;" ;
+                "SELECT *" +
+                "FROM academyjdbc.employee";
 
         resultSet = statement.executeQuery(printQ1);
         while (resultSet.next()) {
-            L.info(resultSet.getString("marchio") + "\t"+
-            resultSet.getString("fatturato"));
+            L.info(resultSet.getString("id") + "\t"+
+                    resultSet.getString("name") + "\t"+
+                    resultSet.getString("lastname"));
         }
-
     }
 
 
-    public void printQ2() throws SQLException {
+    @Override
+    public void updateEmployee() throws SQLException {
         String printQ2= "" +
-                "SELECT a.marchio\n" +
-                "FROM academyjdbc.auto a\n" +
-                "where a.nazione= \"Germania\";" ;
+                "UPDATE academyjdbc.employee " +
+                "SET lastname = ? " +
+                "WHERE id = ?" ;
 
-        resultSet = statement.executeQuery(printQ2);
-        while (resultSet.next()) {
-            L.info(resultSet.getString("marchio"));
-        }
+        preparedStatement=connection.prepareStatement(printQ2);
+
+        L.info("Inserisci il cognome da sostituire ad un id(int) sopra elencato");
+        preparedStatement.setString(1,s.next());
+        preparedStatement.setInt(2,s.nextInt());
+        preparedStatement.executeUpdate();
+
     }
 
 
-    public void printQ3() throws SQLException {
+    @Override
+    public void deleteEmployee() throws SQLException {
         String printQ3= "" +
-                "SELECT a.dipendenti\n" +
-                "FROM academyjdbc.auto a\n" +
-                "where a.nazione= \"Germania\";" ;
+                "DELETE FROM academyjdbc.employee " +
+                "WHERE id = ? ";
 
-        resultSet = statement.executeQuery(printQ3);
-        while (resultSet.next()) {
-            L.info(resultSet.getString("dipendenti"));
+            preparedStatement=connection.prepareStatement(printQ3);
+            L.info("Inserisci l'id da voler eliminare");
+            preparedStatement.setInt(1,s.nextInt());
+            preparedStatement.execute();
         }
-    }
-
-
-    public void printQ4() throws SQLException {
-        String printQ4= "" +
-                "SELECT a.marchio,a.fatturato\n" +
-                "FROM academyjdbc.auto a\n" +
-                "ORDER BY a.dipendenti DESC;" ;
-
-        resultSet = statement.executeQuery(printQ4);
-        while (resultSet.next()) {
-            L.info(resultSet.getString("marchio")+"\t"+
-                    resultSet.getString("fatturato") );
-        }
-    }
-
-
-    public void printQ5() throws SQLException {
-        String printQ5= "" +
-                "SELECT a.nazione,a.fatturato\n" +
-                "FROM academyjdbc.auto a\n" +
-                "ORDER BY a.nazione DESC;" ;
-
-        resultSet = statement.executeQuery(printQ5);
-        while (resultSet.next()) {
-            L.info(resultSet.getString("nazione")+"\t"+
-                    resultSet.getString("fatturato"));
-        }
-    }
 
 
 
         protected void closeMethod() throws SQLException {
             preparedStatement.close();
-            resultSet.close();
+            //resultSet.close();
             statement.close();
             connection.close();
 
             System.out.println("\n");
             L.info("Connessioni chiuse");
         }
+
+
+
+
+
+
 }
 
 

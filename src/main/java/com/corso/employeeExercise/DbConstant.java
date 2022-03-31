@@ -1,4 +1,4 @@
-package com.corso.esercizioDb2;
+package com.corso.employeeExercise;
 
 public class DbConstant {
 

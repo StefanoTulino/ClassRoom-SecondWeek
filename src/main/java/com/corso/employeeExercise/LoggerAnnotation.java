@@ -1,6 +1,6 @@
 package com.corso.employeeExercise;
 
-public @interface LOG {
+public @interface LoggerAnnotation {
 
     String value();
 }
